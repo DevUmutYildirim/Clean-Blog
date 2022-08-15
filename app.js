@@ -1,29 +1,40 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const ejs = require("ejs");
-
+const Post = require('./Models/Post')
 const app = express();
 
-
-// MIDDLEWARE
-const myLogger = (req, res, next) => {
-    console.log("Middleware 1");
-    next();
-}
-
+// connect to database
+mongoose.connect('mongodb://localhost/clean-blog-db', {
+    useNewUrlParser : true,
+    useUnifiedTopology : true
+});
+// template engine
 app.set("view engine", "ejs");
 
+// Middlewares
 app.use(express.static('public'))
-app.use(myLogger);
+app.use(express.urlencoded({extended: true})) // read the data from the url
+app.use(express.json()) // convert the data to JSON
 
-app.get("/", (req, res) => {
-    res.render("index");
-})
+
+app.get("/", async (req, res) => {
+    const posts = await Post.find({})
+    res.render("index", {
+        posts
+    });
+});
 app.get("/about", (req, res) => {
     res.render("about");
-})
+});
 app.get("/add", (req, res) => {
     res.render("add");
-})
+});
+
+app.post("/posts", async (req, res) => {
+    await Post.create(req.body)
+    res.redirect('/');
+});
 
 const port = 5000;
 app.listen(port, () => {
